@@ -1,6 +1,6 @@
 // main.ts
 
-import { CortexAPI, CreateAssistantDto, CreateChatCompletionDto, ChatCompletionMessage, PullModelRequest, ModelStartDto } from './cortex.ts';
+import { CortexAPI, CreateAssistantDto, CreateChatCompletionDto, ChatCompletionMessage, PullModelRequest, ModelStartDto, type ImportModelRequest } from './cortex.ts';
 import { agents } from './agents.ts';
 
 (async () => {
@@ -14,28 +14,30 @@ import { agents } from './agents.ts';
         console.log(installResp.message);
     }
 
-    const modelId = 'gguf-model';
-    const modelUrl = '10.10.0.139:8000/LLAMA-3_8B_Unaligned_BETA-Q6_K.gguf';
+    const modelName = 'LLAMA-3_8B_Unaligned_BETA';
+    const modelPath = '/models/LLAMA-3_8B_Unaligned_BETA-Q6_K.gguf';
 
     const models = await cortex.listModels();
-    const modelExists = models.data.some(model => model.id === modelId);
+    const modelExists = models.data.some(model => model.id === modelName);
 
     if (!modelExists) {
-        const pullModelData: PullModelRequest = { model: modelUrl };
-        const pullResponse = await cortex.pullModel(pullModelData);
-        console.log(pullResponse.message);
+        console.log(`${modelName} doesn't exist. Importing.`)
+        const importModelData: ImportModelRequest = { modelPath: modelPath, model: modelName };
+        const importResponse = await cortex.importModel(importModelData);
+        console.log(importResponse.message);
 
         let modelReady = false;
         while (!modelReady) {
             const currentModels = await cortex.listModels();
-            modelReady = currentModels.data.some(model => model.id === modelId);
+            modelReady = currentModels.data.some(model => model.name === modelName);
             if (!modelReady) {
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
         }
+        console.log(`${modelName} Imported.`)
     }
 
-    const startModelData: ModelStartDto = { model: modelId };
+    const startModelData: ModelStartDto = { model: modelName };
     const startResponse = await cortex.startModel(startModelData);
     console.log(startResponse.message);
 
@@ -44,7 +46,7 @@ import { agents } from './agents.ts';
             id: agent.id,
             name: agent.name,
             description: agent.description,
-            model: modelId,
+            model: modelName,
             instructions: agent.instructions,
             tools: [],
             metadata: null,
@@ -61,11 +63,11 @@ import { agents } from './agents.ts';
 
     const messages: ChatCompletionMessage[] = [
         { role: 'system', content: assistant.instructions },
-        { role: 'user', content: 'Hello, can you tell me about yourself?' }
+        { role: 'user', content: 'Hello! Im coco' }
     ];
 
     const chatCompletionData: CreateChatCompletionDto = {
-        model: modelId,
+        model: modelName,
         messages: messages,
         temperature: assistant.temperature,
         top_p: assistant.top_p,

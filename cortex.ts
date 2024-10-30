@@ -109,6 +109,38 @@ export interface ModelDto {
     temperature?: number;
     top_p?: number;
     use_mmap?: boolean;
+    ai_template?: string;
+    created?: number;
+    dynatemp_exponent?: number;
+    dynatemp_range?: number;
+    files?: string[];
+    gpu_arch?: string;
+    ignore_eos?: boolean;
+    min_keep?: number;
+    min_p?: number;
+    mirostat?: boolean;
+    mirostat_eta?: number;
+    mirostat_tau?: number;
+    model?: string;
+    n_parallel?: number;
+    n_probs?: number;
+    name?: string;
+    object?: string;
+    os?: string;
+    owned_by?: string;
+    penalize_nl?: boolean;
+    precision?: string;
+    quantization_method?: string;
+    repeat_last_n?: number;
+    repeat_penalty?: number;
+    seed?: number;
+    system_template?: string;
+    text_model?: boolean;
+    tfs_z?: number;
+    top_k?: number;
+    typ_p?: number;
+    user_template?: string;
+    version?: string;
 }
 
 export interface DeleteModelResponseDto {
@@ -125,6 +157,17 @@ export interface PullModelRequest {
 export interface PullModelResponse {
     message: string;
     task?: any;
+}
+
+export interface ImportModelRequest {
+    model: string;
+    modelPath: string;
+}
+
+export interface ImportModelResponse {
+    message: string;
+    modelHandle: string;
+    result: string;
 }
 
 export interface ModelStartDto {
@@ -321,6 +364,17 @@ export class CortexAPI {
 
     async pullModel(data: PullModelRequest): Promise<PullModelResponse> {
         const response = await fetch(`${this.baseUrl}/v1/models/pull`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        return response.json();
+    }
+
+    async importModel(data: ImportModelRequest): Promise<ImportModelResponse> {
+        const response = await fetch(`${this.baseUrl}/v1/models/import`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
